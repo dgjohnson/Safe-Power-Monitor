@@ -1,10 +1,9 @@
 #!/usr/bin/env python2.7
-# date: 13/10/16
-# author: Camble
-# version: 1.0a
-# name: Safe-Power-Monitor - A utility to compliment the Safe Shutdown Switch for the Gameboy Zero project
-# description: A GPIO monitor with graceful shutdown capability and video warning overlays
-# source: https://github.com/Camble/Safe-Power-Monitor
+# date: 6/12/2018
+# original author: Camble
+# version: RKDRII v1.0
+# name: Safe-Power-Monitor - A utility to compliment the integrated Safe Shutdown of the RKDRII handheld
+# description: RKDRII GPIO monitor with graceful shutdown and video warning overlays
 
 import RPi.GPIO as GPIO
 import subprocess
@@ -52,7 +51,7 @@ class GpioWatcher(object):
     self.trigger = trigger_state
     if internal_pull is GPIO.PUD_DOWN:
       self.pull = GPIO.PUD_DOWN
-    else:
+    elif internal_pull is GPIO.PUD_UP:
       self.pull = GPIO.PUD_UP
 
     # Set edge type for event listener
@@ -103,8 +102,10 @@ class BatteryWatcher(GpioWatcher):
   def warn(self):
     # If the maximum warning count has been reached, skip it and shutdown
     if self.warnCount >= numberOfWarnings:
+      log(82,"to many warnings, shutting down.")      
       shutdown()
     else:
+      log(83,"launch warning.")
       self.warnCount += 1
       self.playerFlag = 1
       self.previousWarn = time.time()
@@ -131,9 +132,11 @@ class BatteryWatcher(GpioWatcher):
       sys.exit(0)
 
   def monitor(self):
+    log(77,"Entered Monitor logic.")
     if self.callbackTriggered is 0 or self.playerFlag is 1:
       return
     if self.previousWarn is None:
+      log(78,"Preparing to warn.")
       self.warn()
     else:
       elapsed = time.time() - self.previousWarn
@@ -142,7 +145,9 @@ class BatteryWatcher(GpioWatcher):
         self.playerFlag = 0
         self.previousWarn = None
         self.callbackTriggered = 0
+        log(79,"wait longer to warn."
       elif elapsed >= 60:
+        log(80, "trigger warning alert!")
         self.warn()
 
   def callbackFunc(self, channel):
